@@ -9,6 +9,37 @@ const char CURL_BASIC_AUTH_FLAG[6] = " -u\"";
 const char CURL_BASIC_AUTH_SEP[2] = ":";
 const char CURL_BASIC_AUTH_CLOSE[2] = "\"";
 
+struct string {
+  char *ptr;
+  size_t len;
+};
+
+void init_string(struct string *s) {
+  s->len = 0;
+  s->ptr = malloc(s->len+1);
+  if (s->ptr == NULL) {
+    fprintf(stderr, "malloc() failed\n");
+    exit(EXIT_FAILURE);
+  }
+  s->ptr[0] = '\0';
+}
+
+size_t writefunc(void *ptr, size_t size, size_t nmemb, void *s)
+{
+  struct string *ss = (struct string *)s;
+  size_t new_len = ss->len + size*nmemb;
+  ss->ptr = realloc(ss->ptr, new_len+1);
+  if (ss->ptr == NULL) {
+    fprintf(stderr, "realloc() failed\n");
+    exit(EXIT_FAILURE);
+  }
+  memcpy(ss->ptr+ss->len, ptr, size*nmemb);
+  ss->ptr[new_len] = '\0';
+  ss->len = new_len;
+
+  return size*nmemb;
+}
+
 void generate_file_name(int p_or_e){
     time_t t = time(NULL);
     struct tm tn = *localtime(&t);
@@ -19,20 +50,14 @@ void generate_file_name(int p_or_e){
     }
 }
 
-void autarco_build_curl_request(char* return_array, 
-                                char *site_id,
+void autarco_build_curl_request(char *site_id,
                                 char *uname,
                                 char* pwd,
                                 int power_or_energy){
+    char return_array[2048];
     int i = 0;
     int j = 0;
-    while (CURL_PREFIX[i] != '\0'){
-        return_array[j] = CURL_PREFIX[i];
-        i++;
-        j++;
-    }
-    
-    i = 0;
+
     while (AUTARCO_BASE_URL[i] != '\0'){
         return_array[j] = AUTARCO_BASE_URL[i];
         i++;
@@ -61,44 +86,30 @@ void autarco_build_curl_request(char* return_array,
             j++;
         }
     }
-
-    i=0;
-    while (CURL_BASIC_AUTH_FLAG[i] != '\0'){
-        return_array[j] = CURL_BASIC_AUTH_FLAG[i];
-        i++;
-        j++;
-    }
-
-    i=0;
-    while (uname[i] != '\0'){
-        return_array[j] = uname[i];
-        i++;
-        j++;
-    }
-
-    i=0;
-    while (CURL_BASIC_AUTH_SEP[i] != '\0'){
-        return_array[j] = CURL_BASIC_AUTH_SEP[i];
-        i++;
-        j++;
-    }
-
-    i=0;
-    while (pwd[i] != '\0'){
-        return_array[j] = pwd[i];
-        i++;
-        j++;
-    }
-
-    i=0;
-    while (CURL_BASIC_AUTH_CLOSE[i] != '\0'){
-        return_array[j] = CURL_BASIC_AUTH_CLOSE[i];
-        i++;
-        j++;
-    }
     return_array[j] = '\0';
 
     generate_file_name(power_or_energy);
 
-    CURL *curl;
+    CURL* curl = curl_easy_init();
+    if(curl)
+    {
+        CURLcode res;
+        struct string s;
+		init_string(&s);
+        curl_easy_setopt(curl, CURLOPT_URL, return_array);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&s);
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writefunc);
+		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+        curl_easy_setopt(curl, CURLOPT_USERNAME, uname);
+        curl_easy_setopt(curl, CURLOPT_PASSWORD, pwd);
+        res = curl_easy_perform(curl);
+        if(res != CURLE_OK){
+			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+      		res = curl_easy_perform(curl);
+		}
+        if(res == CURLE_OK){
+            printf("%s\n", s.ptr);
+        }
+    }
+    curl_easy_cleanup(curl);
 }
