@@ -177,11 +177,9 @@ void autarco_build_curl_request(char *site_id,
       		res = curl_easy_perform(curl);
 		}
         if(res == CURLE_OK){
-            /* FILE *fid = fopen(); */
             char outname[756];
             generate_file_name(outname, outdir, power_or_energy);
             FILE *fid = fopen(outname, "w");
-            printf("%s %i\n", outname, fid);
             if(fid){
                 fprintf(fid, s.ptr);
             }

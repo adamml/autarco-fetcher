@@ -2,10 +2,10 @@
 #include <conf_reader.h>
 #include <stdio.h>
 
-int main (void){
+int main (int argc, char *argv[]){
 
     struct conf c;
-    conf_reader(&c, "conf.toml");
+    conf_reader(&c, argv[1]);
     
     autarco_build_curl_request(c.AUTARCO_SITE_ID,
                                c.AUTARCO_UNAME,
