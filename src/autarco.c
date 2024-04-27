@@ -43,12 +43,12 @@ size_t writefunc(void *ptr, size_t size, size_t nmemb, void *s)
 void generate_file_name(char *res, char *outdir, int p_or_e){
     time_t t = time(NULL);
     struct tm tn = *localtime(&t);
-    char dash[2] = "-";
-    char year[5];
+    char dash[12] = "-";
+    char year[12];
     sprintf(year, "%d", tn.tm_year+1900);
-    char month[3];
+    char month[12];
     sprintf(month, "%02d", tn.tm_mon+1);
-    char day[3];
+    char day[12];
     sprintf(day, "%02d", tn.tm_mday+1);
     char dot_json[6] = ".json";
 
