@@ -1,0 +1,11 @@
+*.exe
+*.o
+*.yaml
+*.toml
+
+.vscode/
+
+include/curl
+include/curl/*
+
+*.dll
