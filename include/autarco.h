@@ -3,6 +3,8 @@
 
 #include <time.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <curl/curl.h>
 
 void autarco_build_curl_request(char *site_id,
