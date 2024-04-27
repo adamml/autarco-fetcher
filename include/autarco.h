@@ -8,6 +8,7 @@
 void autarco_build_curl_request(char *site_id,
                                 char *uname,
                                 char* pwd,
+                                char* outdir,
                                 int power_or_energy);
 
 #endif

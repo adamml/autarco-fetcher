@@ -40,19 +40,90 @@ size_t writefunc(void *ptr, size_t size, size_t nmemb, void *s)
   return size*nmemb;
 }
 
-void generate_file_name(int p_or_e){
+void generate_file_name(char *res, char *outdir, int p_or_e){
     time_t t = time(NULL);
     struct tm tn = *localtime(&t);
-    if(p_or_e == 0){
-        printf("%d-%02d-%02d_power.json\n", tn.tm_year+1900, tn.tm_mon+1, tn.tm_mday+1);
-    } else if(p_or_e == 1){
-        printf("%d-%02d-%02d_energy.json\n", tn.tm_year+1900, tn.tm_mon+1, tn.tm_mday+1);
+    char dash[2] = "-";
+    char year[5];
+    sprintf(year, "%d", tn.tm_year+1900);
+    char month[3];
+    sprintf(month, "%02d", tn.tm_mon+1);
+    char day[3];
+    sprintf(day, "%02d", tn.tm_mday+1);
+    char dot_json[6] = ".json";
+
+    int i=0;
+    int j=0;
+    while(outdir[i] != '\0'){
+        res[j] = outdir[i];
+        i++;
+        j++;
     }
+    i=0;
+    while(year[i] != '\0'){
+        res[j] = year[i];
+        i++;
+        j++;
+    }
+    i=0;
+    while(dash[i] != '\0'){
+        res[j] = dash[i];
+        i++;
+        j++;
+    }
+    i=0;
+    while(month[i] != '\0'){
+        res[j] = month[i];
+        i++;
+        j++;
+    }
+    i=0;
+    while(dash[i] != '\0'){
+        res[j] = dash[i];
+        i++;
+        j++;
+    }
+    i = 0;
+    while(day[i] != '\0'){
+        res[j] = day[i];
+        i++;
+        j++;
+    }
+    i=0;
+    while(dash[i] != '\0'){
+        res[j] = dash[i];
+        i++;
+        j++;
+    }
+
+    if(p_or_e == 0){
+        i = 1;
+        while(AUTARCO_URL_SUFFIX_POWER[i] != '\0'){
+            res[j] = AUTARCO_URL_SUFFIX_POWER[i];
+            i++;
+            j++;
+        }
+    } else if(p_or_e == 1){
+        i = 1;
+        while(AUTARCO_URL_SUFFIX_ENERGY[i] != '\0'){
+            res[j] = AUTARCO_URL_SUFFIX_ENERGY[i];
+            i++;
+            j++;
+        }
+    }
+    i = 0;
+    while(dot_json[i] != '\0'){
+        res[j] = dot_json[i];
+        i++;
+        j++;
+    }
+    res[j] = '\0';
 }
 
 void autarco_build_curl_request(char *site_id,
                                 char *uname,
-                                char* pwd,
+                                char *pwd,
+                                char *outdir,
                                 int power_or_energy){
     char return_array[2048];
     int i = 0;
@@ -88,8 +159,6 @@ void autarco_build_curl_request(char *site_id,
     }
     return_array[j] = '\0';
 
-    generate_file_name(power_or_energy);
-
     CURL* curl = curl_easy_init();
     if(curl)
     {
@@ -108,7 +177,15 @@ void autarco_build_curl_request(char *site_id,
       		res = curl_easy_perform(curl);
 		}
         if(res == CURLE_OK){
-            printf("%s\n", s.ptr);
+            /* FILE *fid = fopen(); */
+            char outname[756];
+            generate_file_name(outname, outdir, power_or_energy);
+            FILE *fid = fopen(outname, "w");
+            printf("%s %i\n", outname, fid);
+            if(fid){
+                fprintf(fid, s.ptr);
+            }
+            fclose(fid);
         }
     }
     curl_easy_cleanup(curl);
